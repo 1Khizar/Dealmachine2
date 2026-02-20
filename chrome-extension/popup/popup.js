@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const toastContainer = document.getElementById("toastContainer");
 
-  const API_BASE_URL = "https://deal-machine-scraper.onrender.com/api";
+  const API_BASE_URL = "https://dealmachine2.onrender.com/api";
 
   function showToast(message, isSuccess) {
     console.log(`Toast: ${message} (${isSuccess ? 'success' : 'error'})`);
