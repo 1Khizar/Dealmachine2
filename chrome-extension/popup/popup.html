@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DealMachine Scraper</title>
     <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Background Effects -->
         <div class="bg-grid"></div>
         <div class="bg-glow"></div>
-        
+
         <!-- Header -->
         <div class="header">
             <div class="logo">
@@ -32,26 +34,26 @@
                     <h2 class="form-title">ACCESS TERMINAL</h2>
                     <div class="form-subtitle">Secure Authentication Required</div>
                 </div>
-                
+
                 <form id="loginFormElement">
                     <div class="input-group">
                         <label class="input-label">EMAIL</label>
                         <input type="email" id="loginEmail" class="cyber-input" placeholder="user@domain.com" required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <div class="input-group">
                         <label class="input-label">PASSWORD</label>
                         <input type="password" id="loginPassword" class="cyber-input" placeholder="••••••••" required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <button type="submit" class="cyber-button primary">
                         <span class="button-text">AUTHENTICATE</span>
                         <div class="button-glow"></div>
                     </button>
                 </form>
-                
+
                 <div class="form-footer">
                     <button class="link-button" id="showRegister">New User? Register Here</button>
                 </div>
@@ -63,38 +65,40 @@
                     <h2 class="form-title">USER REGISTRATION</h2>
                     <div class="form-subtitle">Request Access Credentials</div>
                 </div>
-                
+
                 <form id="registerFormElement">
                     <div class="input-group">
                         <label class="input-label">FIRST NAME</label>
                         <input type="text" id="registerFirstName" class="cyber-input" placeholder="John" required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <div class="input-group">
                         <label class="input-label">LAST NAME</label>
                         <input type="text" id="registerLastName" class="cyber-input" placeholder="Doe" required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <div class="input-group">
                         <label class="input-label">EMAIL</label>
-                        <input type="email" id="registerEmail" class="cyber-input" placeholder="user@domain.com" required>
+                        <input type="email" id="registerEmail" class="cyber-input" placeholder="user@domain.com"
+                            required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <div class="input-group">
                         <label class="input-label">PASSWORD</label>
-                        <input type="password" id="registerPassword" class="cyber-input" placeholder="••••••••" required>
+                        <input type="password" id="registerPassword" class="cyber-input" placeholder="••••••••"
+                            required>
                         <div class="input-border"></div>
                     </div>
-                    
+
                     <button type="submit" class="cyber-button primary">
                         <span class="button-text">REQUEST ACCESS</span>
                         <div class="button-glow"></div>
                     </button>
                 </form>
-                
+
                 <div class="form-footer">
                     <button class="link-button" id="showLogin">Already Registered? Login</button>
                 </div>
@@ -110,19 +114,50 @@
                     </div>
                     <button class="logout-button" id="logoutButton">⏻</button>
                 </div>
-                
+
                 <div class="scraper-section">
                     <div class="scraper-header">
                         <h3 class="section-title">DATA EXTRACTION</h3>
                         <div class="scraper-status" id="scraperStatus">READY</div>
                     </div>
-                    
+
                     <button class="cyber-button scrape-button" id="scrapeButton">
                         <span class="button-text">INITIATE SCRAPE</span>
                         <div class="button-glow"></div>
                         <div class="loading-spinner hidden"></div>
                     </button>
-                    
+
+                    <button class="cyber-button stop-button hidden" id="stopButton">
+                        <span class="button-text">⬛ STOP SCRAPING</span>
+                        <div class="button-glow"></div>
+                    </button>
+
+                    <!-- Progress Section -->
+                    <div class="progress-section hidden" id="progressSection">
+                        <div class="progress-header">
+                            <span class="progress-label">SCRAPING IN PROGRESS</span>
+                            <span class="progress-pulse">●</span>
+                        </div>
+                        <div class="progress-details">
+                            <div class="progress-row">
+                                <span class="progress-key">PAGE:</span>
+                                <span class="progress-value" id="progressPage">1</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="progress-key">CURRENT ROW:</span>
+                                <span class="progress-value" id="progressRow">0 / 0</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="progress-key">VALID ROWS:</span>
+                                <span class="progress-value highlight" id="progressValid">0</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="progress-key">LAST ADDRESS:</span>
+                                <span class="progress-value small" id="progressAddress">--</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-value" id="lastScrapeCount">0</div>
@@ -143,5 +178,5 @@
 
     <script src="popup.js"></script>
 </body>
-</html>
 
+</html>

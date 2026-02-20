@@ -20,10 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const registerPasswordInput = document.getElementById("registerPassword");
 
   const scrapeButton = document.getElementById("scrapeButton");
+  const stopButton = document.getElementById("stopButton");
   const scraperStatus = document.getElementById("scraperStatus");
   const userNameDisplay = document.getElementById("userName");
   const userStatusDisplay = document.getElementById("userStatus");
   const logoutButton = document.getElementById("logoutButton");
+
+  // Progress elements
+  const progressSection = document.getElementById("progressSection");
+  const progressPage = document.getElementById("progressPage");
+  const progressRow = document.getElementById("progressRow");
+  const progressValid = document.getElementById("progressValid");
+  const progressAddress = document.getElementById("progressAddress");
 
   const statusIndicator = document.getElementById("statusIndicator");
   const statusDot = statusIndicator.querySelector(".status-dot");
@@ -52,6 +60,37 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => toast.remove(), 300);
     }, 3000);
   }
+
+  // ─── Message Listener for Progress Updates ───
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "scraperProgress") {
+      // Show progress section if hidden
+      if (progressSection.classList.contains("hidden")) {
+        progressSection.classList.remove("hidden");
+        scrapeButton.classList.add("hidden");
+        stopButton.classList.remove("hidden");
+        scraperStatus.textContent = "SCRAPING...";
+        scraperStatus.className = "scraper-status scraping";
+      }
+
+      // Update UI
+      if (message.page) progressPage.textContent = message.page;
+      if (message.currentRow && message.totalAddresses) {
+        progressRow.textContent = `${message.currentRow} / ${message.totalAddresses}`;
+      }
+      if (message.totalValid !== undefined) progressValid.textContent = message.totalValid;
+      if (message.lastAddress) progressAddress.textContent = message.lastAddress;
+
+      // Log completion
+      if (message.status === "completed" || message.status === "failed") {
+        progressSection.classList.add("hidden");
+        scrapeButton.classList.remove("hidden");
+        stopButton.classList.add("hidden");
+        scraperStatus.textContent = "READY";
+        scraperStatus.className = "scraper-status ready";
+      }
+    }
+  });
 
   function setOnlineStatus(isOnline) {
     if (isOnline) {
@@ -240,13 +279,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setOnlineStatus(false);
   });
 
+  // ─── Scrape Button Logic ───
   scrapeButton.addEventListener("click", async (e) => {
     e.preventDefault();
     console.log("Scrape button clicked");
-    
+
     const { jwtToken } = await chrome.storage.local.get("jwtToken");
-    console.log("JWT Token exists:", !!jwtToken);
-    
+
     if (!jwtToken) {
       showToast("Authentication required.", false);
       return;
@@ -254,8 +293,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const tab = tabs[0];
-    
-    console.log("Current tab URL:", tab?.url);
 
     if (!tab || !tab.url) {
       showToast("Cannot detect current tab.", false);
@@ -267,13 +304,21 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    scrapeButton.disabled = true;
+    // UI Update: Start
+    scrapeButton.classList.add("hidden");
+    stopButton.classList.remove("hidden");
+    progressSection.classList.remove("hidden");
     scraperStatus.textContent = "SCRAPING...";
     scraperStatus.className = "scraper-status scraping";
     showToast("Starting scrape...", true);
 
-    console.log("Attempting to send message to content script...");
+    // Reset progress UI
+    progressPage.textContent = "1";
+    progressRow.textContent = "0 / 0";
+    progressValid.textContent = "0";
+    progressAddress.textContent = "--";
 
+    // Inject content script if needed
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -281,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       console.log("Content script injected");
     } catch (err) {
-      console.log("Content script injection failed (may already be loaded):", err.message);
+      // Ignore if already loaded
     }
 
     setTimeout(() => {
@@ -291,15 +336,16 @@ document.addEventListener("DOMContentLoaded", () => {
         async (resp) => {
           console.log("Response from content script:", resp);
 
-          scrapeButton.disabled = false;
+          // UI Update: Finish
+          scrapeButton.classList.remove("hidden");
+          stopButton.classList.add("hidden");
+          progressSection.classList.add("hidden");
           scraperStatus.textContent = "READY";
           scraperStatus.className = "scraper-status ready";
 
           if (chrome.runtime.lastError) {
-            console.error("Chrome runtime error:", chrome.runtime.lastError);
-            showToast("Communication error. Refresh page and try again.", false);
+            showToast("Communication error. Refresh page.", false);
           } else if (resp) {
-            // Log to backend if needed
             if (resp.shouldLog && resp.logData) {
               await logScrapingSession(
                 resp.logData.dataCount,
@@ -308,18 +354,36 @@ document.addEventListener("DOMContentLoaded", () => {
               );
             }
 
-            // Show result to user
             if (resp.success) {
-              showToast(`Success! Found ${resp.count} wireless numbers!`, true);
+              showToast(`Success! Found ${resp.count} valid rows!`, true);
             } else {
-              showToast(`Scrape failed: ${resp.error}`, false);
+              if (resp.error !== "Scraper is already running") {
+                showToast(`Scrape stopped: ${resp.error}`, false);
+              }
             }
-          } else {
-            showToast("Scrape failed: No response from content script", false);
           }
         }
       );
     }, 500);
+  });
+
+  // ─── Stop Button Logic ───
+  stopButton.addEventListener("click", async (e) => {
+    e.preventDefault();
+    showToast("Stopping scraper...", true);
+
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = tabs[0];
+
+    if (tab && tab.id) {
+      chrome.tabs.sendMessage(tab.id, { action: "stopScraping" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.log("Error sending stop signal:", chrome.runtime.lastError);
+        } else {
+          console.log("Stop signal sent");
+        }
+      });
+    }
   });
 
   checkAuthStatus();

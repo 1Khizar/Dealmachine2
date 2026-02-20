@@ -37,10 +37,23 @@
       const last = rest.pop() || "";
       const middle = rest.join(" ");
 
+      // Extract emails
+      const rawEmails = lead.emailAddresses || lead.emails || [];
+      const emailStr = Array.isArray(rawEmails)
+        ? rawEmails.map(e => (typeof e === 'object' ? (e.emailAddress || e.email) : e)).join("; ")
+        : (rawEmails || "");
+
+      let hasSavedRow = false;
       for (const p of lead.phoneNumbers) {
         if (p.type.toLowerCase() === "wireless") {
-          rows.push([street, city, state, zip, p.number, first, middle, last]);
+          rows.push([street, city, state, zip, p.number, first, middle, last, emailStr]);
+          hasSavedRow = true;
         }
+      }
+
+      // If no wireless phone but has email, save it
+      if (!hasSavedRow && emailStr) {
+        rows.push([street, city, state, zip, "", first, middle, last, emailStr]);
       }
     }
     return rows;
@@ -66,6 +79,7 @@
       "First",
       "Middle",
       "Last",
+      "Email",
     ];
     allRows.push(header);
 
